@@ -17,7 +17,7 @@ else
     exit 1
 fi
 
-# get depended source code and software
+# get depended source code and software teste
 
 sudo python3 -m pip install --upgrade pip
 
