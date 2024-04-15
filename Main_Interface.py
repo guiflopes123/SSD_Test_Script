@@ -11,19 +11,17 @@ class NVME_Test_GUI:
         self.test_options = self.get_test_scripts()  # Obter os nomes dos arquivos Python de teste
         self.disk_list = self.get_disk_devices()  # Obter a lista de dispositivos NVMe e SATA conectados
 
-        self.test_selection_var = tk.StringVar()
-        self.test_selection_var.set(self.test_options[0])
-
+        self.selected_test_vars = [tk.IntVar() for _ in range(len(self.test_options))]
         self.selected_disk_vars = [tk.IntVar() for _ in range(len(self.disk_list))]
 
         self.create_widgets()
 
     def create_widgets(self):
-        tk.Label(self.master, text="Selecione o teste a ser aplicado:").pack()
+        tk.Label(self.master, text="Selecione os testes a serem aplicados:").pack()
 
-        # Dropdown para selecionar o teste
-        self.test_dropdown = tk.OptionMenu(self.master, self.test_selection_var, *self.test_options)
-        self.test_dropdown.pack()
+        # Caixas de seleção para cada teste
+        for i, test in enumerate(self.test_options):
+            tk.Checkbutton(self.master, text=test, variable=self.selected_test_vars[i]).pack()
 
         tk.Label(self.master, text="Selecione os discos a serem testados:").pack()
 
@@ -57,7 +55,7 @@ class NVME_Test_GUI:
                 if line.strip():  # Ignora linhas em branco
                     parts = line.split()
                     disk_name = parts[0]
-                    if disk_name.startswith('sda') or disk_name.startswith('nvme'):
+                    if disk_name.startswith('sd') or disk_name.startswith('nvme'):
                         disk_devices.append(disk_name)
         except subprocess.CalledProcessError:
             # Trata o erro se o comando lsblk falhar
@@ -65,29 +63,31 @@ class NVME_Test_GUI:
         return disk_devices
 
     def start_test(self):
-        selected_test = self.test_selection_var.get()
-        selected_disk_devices = [self.disk_list[i] for i, var in enumerate(self.selected_disk_vars) if var.get() == 1]
+        selected_tests = [self.test_options[i] for i, var in enumerate(self.selected_test_vars) if var.get() == 1]
+        selected_disks = [self.disk_list[i] for i, var in enumerate(self.selected_disk_vars) if var.get() == 1]
 
-        if not selected_disk_devices:
+        if not selected_tests:
+            messagebox.showerror("Erro", "Selecione pelo menos um teste para executar.")
+            return
+
+        if not selected_disks:
             messagebox.showerror("Erro", "Selecione pelo menos um disco para testar.")
             return
 
-        messagebox.showinfo("Iniciando Teste", f"Iniciando {selected_test} nos discos: {', '.join(selected_disk_devices)}")
+        for test in selected_tests:
+            self.result_text.insert(tk.END, f"Iniciando teste: {test}\n\n")
+            for disk in selected_disks:
+                # Substitua "python test_script.py" pelo comando real para executar o teste
+                command = f"python3 Test_Scripts/{test}.py {disk}"
 
-        # Limpa o texto na área de resultado
-        self.result_text.delete(1.0, tk.END)
+                try:
+                    result = subprocess.check_output(command, shell=True, text=True)
+                    # Adiciona o resultado à área de resultado
+                    self.result_text.insert(tk.END, f"Resultado para {disk}:\n{result}\n\n")
+                except subprocess.CalledProcessError as e:
+                    self.result_text.insert(tk.END, f"Erro ao iniciar teste para {disk}:\n{str(e)}\n\n")
 
-        for disk in selected_disk_devices:
-            # Substitua "python test_script.py" pelo comando real para executar o teste
-            command = f"python3 Test_Scripts/{selected_test}.py {disk}"
-
-            try:
-                result = subprocess.check_output(command, shell=True, text=True)
-                # Adiciona o resultado à área de resultado
-                self.result_text.insert(tk.END, f"Resultado para {disk}:\n{result}\n\n")
-            except subprocess.CalledProcessError as e:
-                messagebox.showerror("Erro ao iniciar teste", str(e))
-
+            self.result_text.insert(tk.END, f"Teste {test} concluído.\n\n")
 
 def main():
     root = tk.Tk()

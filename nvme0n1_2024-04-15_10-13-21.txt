@@ -1,0 +1,98 @@
+Informações do Controlador /dev/nvme0n1:
+Test Result: PASS
+NVME Identify Controller:
+vid       : 0x2646
+ssvid     : 0x2646
+sn        : 50026B7686355EB8    
+mn        : KINGSTON SNV2S250G                      
+fr        : SBJ01101
+rab       : 6
+ieee      : 0026b7
+cmic      : 0
+mdts      : 6
+cntlid    : 0x1
+ver       : 0x10400
+rtd3r     : 0x186a0
+rtd3e     : 0x13880
+oaes      : 0x200
+ctratt    : 0
+rrls      : 0
+cntrltype : 1
+fguid     : 
+crdt1     : 0
+crdt2     : 0
+crdt3     : 0
+nvmsr     : 0
+vwci      : 0
+mec       : 0
+oacs      : 0x16
+acl       : 4
+aerl      : 7
+frmw      : 0x12
+lpa       : 0x12
+elpe      : 63
+npss      : 4
+avscc     : 0x1
+apsta     : 0x1
+wctemp    : 356
+cctemp    : 363
+mtfa      : 100
+hmpre     : 16384
+hmmin     : 16384
+tnvmcap   : 0
+unvmcap   : 0
+rpmbs     : 0
+edstt     : 10
+dsto      : 1
+fwug      : 4
+kas       : 0
+hctma     : 0x1
+mntmt     : 303
+mxtmt     : 389
+sanicap   : 0x60000002
+hmminds   : 0
+hmmaxd    : 256
+nsetidmax : 0
+endgidmax : 0
+anatt     : 0
+anacap    : 0
+anagrpmax : 0
+nanagrpid : 0
+pels      : 1
+domainid  : 0
+megcap    : 0
+sqes      : 0x66
+cqes      : 0x44
+maxcmd    : 0
+nn        : 1
+oncs      : 0x9f
+fuses     : 0
+fna       : 0
+vwc       : 0x7
+awun      : 255
+awupf     : 0
+icsvscc     : 1
+nwpc      : 0
+acwu      : 0
+ocfs      : 0
+sgls      : 0
+mnan      : 0
+maxdna    : 0
+maxcna    : 0
+subnqn    : nqn.2021-03.com.kingston:nvme:nvm-subsystem-sn-50026B7686355EB8
+ioccsz    : 0
+iorcsz    : 0
+icdoff    : 0
+fcatt     : 0
+msdbd     : 0
+ofcs      : 0
+ps    0 : mp:5.00W operational enlat:0 exlat:0 rrt:0 rrl:0
+          rwt:0 rwl:0 idle_power:- active_power:-
+ps    1 : mp:3.50W operational enlat:0 exlat:200 rrt:1 rrl:1
+          rwt:1 rwl:1 idle_power:- active_power:-
+ps    2 : mp:2.50W operational enlat:0 exlat:1000 rrt:2 rrl:2
+          rwt:2 rwl:2 idle_power:- active_power:-
+ps    3 : mp:1.50W non-operational enlat:5000 exlat:5000 rrt:3 rrl:3
+          rwt:3 rwl:3 idle_power:- active_power:-
+ps    4 : mp:1.50W non-operational enlat:20000 exlat:70000 rrt:4 rrl:4
+          rwt:4 rwl:4 idle_power:- active_power:-
