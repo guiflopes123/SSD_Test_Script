@@ -5,6 +5,7 @@ import os
 import re
 import datetime
 
+
 class NVME_Test_GUI:
     def __init__(self, master):
         self.master = master
@@ -15,7 +16,7 @@ class NVME_Test_GUI:
 
         self.selected_test_vars = [tk.IntVar() for _ in range(len(self.test_options))]
         self.selected_disk_vars = [tk.IntVar() for _ in range(len(self.disk_list))]
-
+        self.enable_ai_var = tk.IntVar() 
         self.create_widgets()
 
     def create_widgets(self):
@@ -26,10 +27,15 @@ class NVME_Test_GUI:
             tk.Checkbutton(self.master, text=test, variable=self.selected_test_vars[i]).pack()
 
         tk.Label(self.master, text="Selecione os discos a serem testados:").pack()
+              
 
         # Caixas de seleção para cada disco
         for i, disk in enumerate(self.disk_list):
             tk.Checkbutton(self.master, text=disk, variable=self.selected_disk_vars[i]).pack()
+        
+        tk.Label(self.master, text="Selecione se deseja habilitar o AI Report").pack()
+        #Caixa de seleção para AI
+        tk.Checkbutton(self.master, text="AI Report Enable", variable=self.enable_ai_var).pack()
 
         # Botão para iniciar o teste
         tk.Button(self.master, text="Iniciar Teste", command=self.start_test).pack()
@@ -71,6 +77,7 @@ class NVME_Test_GUI:
     def start_test(self):
         selected_tests = [self.test_options[i] for i, var in enumerate(self.selected_test_vars) if var.get() == 1]
         selected_disks = [self.disk_list[i] for i, var in enumerate(self.selected_disk_vars) if var.get() == 1]
+       
 
         if not selected_tests:
             messagebox.showerror("Erro", "Selecione pelo menos um teste para executar.")
@@ -83,8 +90,11 @@ class NVME_Test_GUI:
         
         for disk in selected_disks:
             current_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            base_dir = os.path.dirname(__file__)
+            log_dir = os.path.join(base_dir, "Log")
             output_filename = f"{disk}_{current_time}.txt"
-            with open(output_filename, "w") as logfile:
+            file_name = f"{log_dir}/{output_filename}"
+            with open(file_name, "w") as logfile:
                 for test in selected_tests:
                     # Substitua "python test_script.py" pelo comando real para executar o teste
                     command = f"sudo python3 Test_Scripts/{test}.py {disk}"
@@ -118,11 +128,18 @@ class NVME_Test_GUI:
                         self.result_text.insert(tk.END, f"Disk: {disk}, Test Item: {test}, Test Result: FAIL\n")
                         # Escreve o resultado no arquivo de log
                         logfile.write(f"Disk: {disk}, Test Item: {test}, Test Result: FAIL\n{result}\n")
-
-
+           
+            if self.enable_ai_var.get() == 1:
+                command = f"sudo python3 gemini-IA.py {output_filename}"
+                result = subprocess.check_output(command, shell=True, text=True, stderr=subprocess.STDOUT)
+                self.result_text.insert(tk.END, "AI habilitado.\n")
+            else:
+                self.result_text.insert(tk.END, "AI desabilitado.\n")
+ 
     def clear_results(self):
         # Limpa o texto na área de resultado
         self.result_text.delete(1.0, tk.END)
+
 
 def main():
     root = tk.Tk()

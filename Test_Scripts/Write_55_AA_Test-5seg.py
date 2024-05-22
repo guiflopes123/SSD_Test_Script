@@ -73,9 +73,9 @@ def nvme_write(controller, start_block, num_blocks, block_size, input_file):
     # Construct the nvme write command
     #time.sleep(1)
     command = ['sudo', 'nvme', 'write', controller, '-s', str(start_block), '-c', str(num_blocks), '-z', str(block_size), '-d', input_file]
-    print(command)
+    #print(command)
     result = subprocess.run(command, capture_output=True, text=True)
-    print(result)
+    #print(result)
     if result.returncode == 0:
         lines = str(result.stderr)
        

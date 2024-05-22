@@ -36,7 +36,7 @@ def print_controller_info(controller):
             response = subprocess.run(cmd, capture_output=True, text=True)
             lines = response.stdout.splitlines()
             current = lines[1]
-            print(current)
+            #print(current)
             if "0x1" in current:           
                 i=0
                 time.sleep(2)  
