@@ -165,12 +165,13 @@ pattern_01_file = '/home/osv/Documents/SSD_Test_Script/test_pattern_01.bin'
 pattern_10_file = '/home/osv/Documents/SSD_Test_Script/test_pattern_10.bin'
 
 if __name__ == "__main__":
-    # if len(sys.argv) != 2:
-    #     print("Erro ao passar os argumentos. Uso: python script.py <nome_da_memoria>")
-    #     sys.exit(1)
+    if len(sys.argv) != 2:
+        print("Erro ao passar os argumentos. Uso: python script.py <nome_da_memoria>")
+        sys.exit(1)
     
-    # partition_name = sys.argv[1]
-    partition_name = "nvme1n1"
+    partition_name = sys.argv[1]
+   # partition_name = "nvme1n1"
+    print("---------------Write and Compare Test----------------")
     test_passed = test_storage(partition_name)
    
 

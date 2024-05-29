@@ -4,12 +4,14 @@ import subprocess
 import os
 import re
 import datetime
+import time
 
 
 class NVME_Test_GUI:
     def __init__(self, master):
         self.master = master
-        self.master.title("NVME Test GUI")
+        self.master.title("NVME Test HT Micron")
+        self.master.geometry("800x600")
 
         self.test_options = self.get_test_scripts()  # Obter os nomes dos arquivos Python de teste
         self.disk_list = self.get_disk_devices()  # Obter a lista de dispositivos NVMe e SATA conectados
@@ -20,35 +22,49 @@ class NVME_Test_GUI:
         self.create_widgets()
 
     def create_widgets(self):
-        tk.Label(self.master, text="Selecione os testes a serem aplicados:").pack()
+        tk.Label(self.master, text="Test Itens Select:").place(x=50, y=0)
 
         # Caixas de seleção para cada teste
         for i, test in enumerate(self.test_options):
-            tk.Checkbutton(self.master, text=test, variable=self.selected_test_vars[i]).pack()
+            tk.Checkbutton(self.master, text=test, variable=self.selected_test_vars[i]).place(x=50, y=30+(i*30))
 
-        tk.Label(self.master, text="Selecione os discos a serem testados:").pack()
+        tk.Label(self.master, text="Disks Select:").place(x=400, y=0)
               
 
         # Caixas de seleção para cada disco
         for i, disk in enumerate(self.disk_list):
-            tk.Checkbutton(self.master, text=disk, variable=self.selected_disk_vars[i]).pack()
+            tk.Checkbutton(self.master, text=disk, variable=self.selected_disk_vars[i]).place(x=400, y=30+(i*30))
         
-        tk.Label(self.master, text="Selecione se deseja habilitar o AI Report").pack()
+        tk.Label(self.master, text="AI Report").place(x=600, y=0)
         #Caixa de seleção para AI
-        tk.Checkbutton(self.master, text="AI Report Enable", variable=self.enable_ai_var).pack()
+        tk.Checkbutton(self.master, text="AI Report Enable", variable=self.enable_ai_var).place(x=600, y=30)
 
         # Botão para iniciar o teste
-        tk.Button(self.master, text="Iniciar Teste", command=self.start_test).pack()
+        tk.Button(self.master, text="Start Test", command=self.start_test).place(x=50, y=300)
 
         # Botão para limpar a área de resultado
-        tk.Button(self.master, text="Limpar Resultados", command=self.clear_results).pack()
+        tk.Button(self.master, text="Clean Results", command=self.clear_results).place(x=200, y=300)
 
         # Área de resultado
         self.result_text = tk.Text(self.master, height=10, width=80)
-        self.result_text.pack()
+        self.result_text.place(x=50, y=350)
 
         # Botão para finalizar o programa
-        tk.Button(self.master, text="Finalizar", command=self.master.quit).pack()
+        tk.Button(self.master, text="EXIT", command=self.master.quit).place(x=400, y=300)
+
+        # Botão para scanear novos devices
+        tk.Button(self.master, text="SCAN", command=self.scan_devices).place(x=600, y=300)
+
+    def scan_devices(self):
+        rescan_cmd = "echo 1 > /sys/bus/pci/rescan"
+        proc = subprocess.Popen(rescan_cmd,
+                                shell=True,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE,
+                                encoding='utf-8')
+        time.sleep(5)
+        proc.wait()
+        self.disk_list = self.get_disk_devices()
 
     def get_test_scripts(self):
         test_scripts = []
@@ -56,7 +72,7 @@ class NVME_Test_GUI:
         for file in os.listdir(test_script_dir):
             if file.endswith(".py"):
                 test_scripts.append(os.path.splitext(file)[0])
-        return test_scripts
+        return sorted(test_scripts)
 
     def get_disk_devices(self):
         disk_devices = []
@@ -70,8 +86,8 @@ class NVME_Test_GUI:
                         disk_devices.append(disk_name)
         except subprocess.CalledProcessError:
             # Trata o erro se o comando lsblk falhar
-            messagebox.showerror("Erro ao executar lsblk.")
-            print("Erro ao executar lsblk.")
+            messagebox.showerror("Error lsblk.")
+            print("Error lsblk.")
         return disk_devices
 
     def start_test(self):
@@ -80,11 +96,11 @@ class NVME_Test_GUI:
        
 
         if not selected_tests:
-            messagebox.showerror("Erro", "Selecione pelo menos um teste para executar.")
+            messagebox.showerror("Error", "No test selected.")
             return
 
         if not selected_disks:
-            messagebox.showerror("Erro", "Selecione pelo menos um disco para testar.")
+            messagebox.showerror("Erro", "No disk selected.")
             return
 
         
@@ -98,7 +114,7 @@ class NVME_Test_GUI:
                 for test in selected_tests:
                     # Substitua "python test_script.py" pelo comando real para executar o teste
                     command = f"sudo python3 Test_Scripts/{test}.py {disk}"
-                       
+                    self.result_text.insert(tk.END, f"Executing Test Item: {test} for disk {disk}\n")   
                     result = subprocess.check_output(command, shell=True, text=True, stderr=subprocess.STDOUT)
                     # Adiciona o resultado à área de resultado
                     pattern = r"Test Result: (PASS|FAIL)"

@@ -55,24 +55,18 @@ def AI_analysis(file_path):
     log_dir = os.path.join(base_dir, "Log")
     output_filename = f"{log_dir}/{file_path}"
     with open(output_filename, 'r') as f:
-        log_text = f.read()
+        file_content = f.read()
 
     chat_session = model.start_chat(
     history=[
         {
         "role": "user",
         "parts": [
-            "Com base no log fornecido, você é um analisador de teste para memória NVME, me resuma o log e analise os dados visando encontrar possíveis problemas na memória, cada item de teste está identificado pcomo (Disk: (nome da memória) Test Item: (item de teste), Test Result: (resultado do teste)), Para cada item de teste encontrado resumir separadamente o seu resultado e os dados coletados. O primeiro item do resumo se chama Resumo do Teste, onde há umalista de quais testes foram feitos com seus resultados{file_content}",
-            log_text
+            "Com base no log fornecido, onde no nome do arquivo se encontra data e hora do teste, você é um analisador de teste para memória NVME, me resuma o log e analise os dados visando encontrar possíveis problemas na memória, cada item de teste está identificado pcomo (Disk: (nome da memória) Test Item: (item de teste), Test Result: (resultado do teste)), Para cada item de teste encontrado resumir separadamente o seu resultado e os dados coletados. O primeiro item do resumo se chama Resumo do Teste, onde há uma lista de quais testes foram feitos com seus resultados, a saída deve ser um relatório em inglês.",
+            file_content
         ],
         },
-        {
-      "role": "model",
-      "parts": [
-        "## Resumo do Teste NVMe para memória: \n\n**Data e Hora do Teste:\n\n**Testes Realizados e Resultados:**\n\n* **SMART_Log:** PASS\n\n\n\n## Detalhes dos Testes:\n\n**1. SMART_Log:**\n\n* **Resultado:** PASS\n* **Observações:**\n    * Nenhum alerta crítico encontrado no log SMART.\n    * Temperatura da Memória: 22°C (dentro da faixa normal)\n    * Disponibilidade de Spare: 100% (excelente)\n    * Porcentagem de Uso: 0% (novo ou pouco usado)\n    * Número de Erros de Mídia: 0 (nenhum erro encontrado) \n\n## Análise Geral:\n\nCom base nos resultados do log, a memória NVMe nvme0n1 parece estar funcionando **corretamente** sem apresentar problemas. Todos os testes realizados foram concluídos com sucesso e os indicadores SMART estão dentro dos parâmetros esperados. \n\n## Recomendações:\n",
-      ],
-    },   
-     
+             
     ]
     )
 
@@ -97,11 +91,12 @@ model = genai.GenerativeModel(
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("Erro ao passar os argumentos. Use: python script.py caminho/para/arquivo.txt")
-        sys.exit(1)
+      print("Erro ao passar os argumentos. Use: python script.py caminho/para/arquivo.txt")
+      sys.exit(1)
 
     file_path = sys.argv[1]
+    #file_path = "nvme0n1_2024-05-24_14-09-29.txt"
     Generated_AR = AI_analysis(file_path)
-    #file_path = "nvme0n1_2024-05-21_09-02-39.txt"
+    #file_path = "nvme0n1_2024-05-24_14-09-29.txt"
 
     
