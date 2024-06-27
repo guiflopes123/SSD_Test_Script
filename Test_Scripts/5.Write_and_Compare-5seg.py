@@ -161,16 +161,18 @@ def print_controller_info(controller):
 start_block = 1
 num_blocks = 10
 block_size = 512  # You can adjust the block size as needed
-pattern_01_file = '/home/osv/Documents/SSD_Test_Script/test_pattern_01.bin'
-pattern_10_file = '/home/osv/Documents/SSD_Test_Script/test_pattern_10.bin'
+base_dir = os.path.dirname(__file__)
+parent_dir = os.path.abspath(os.path.join(base_dir, '..'))
+pattern_01_file = parent_dir + '/test_pattern_01.bin'
+pattern_10_file = parent_dir + '/test_pattern_10.bin'
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Erro ao passar os argumentos. Uso: python script.py <nome_da_memoria>")
-        sys.exit(1)
+    # if len(sys.argv) != 2:
+    #     print("Erro ao passar os argumentos. Uso: python script.py <nome_da_memoria>")
+    #     sys.exit(1)
     
-    partition_name = sys.argv[1]
-   # partition_name = "nvme1n1"
+    # partition_name = sys.argv[1]
+    partition_name = "nvme1n1"
     print("---------------Write and Compare Test----------------")
     test_passed = test_storage(partition_name)
    

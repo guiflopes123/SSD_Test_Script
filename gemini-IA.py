@@ -95,7 +95,7 @@ if __name__ == "__main__":
       sys.exit(1)
 
     file_path = sys.argv[1]
-    #file_path = "nvme0n1_2024-05-24_14-09-29.txt"
+    #file_path = "nvme0n1_2024-06-27_13-58-29.txt"
     Generated_AR = AI_analysis(file_path)
     #file_path = "nvme0n1_2024-05-24_14-09-29.txt"
 

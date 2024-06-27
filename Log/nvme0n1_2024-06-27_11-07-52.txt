@@ -1,0 +1,5 @@
+Disk: nvme0n1, Test Item: 2.SMART_Log, Test Result: FAIL
+---------------SMART LOG Test----------------
+Test Result: FAIL
+
+

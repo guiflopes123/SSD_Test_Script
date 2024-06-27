@@ -6,7 +6,6 @@ import re
 import datetime
 import time
 
-
 class NVME_Test_GUI:
     def __init__(self, master):
         self.master = master
@@ -17,8 +16,9 @@ class NVME_Test_GUI:
         self.disk_list = self.get_disk_devices()  # Obter a lista de dispositivos NVMe e SATA conectados
 
         self.selected_test_vars = [tk.IntVar() for _ in range(len(self.test_options))]
-        self.selected_disk_vars = [tk.IntVar() for _ in range(len(self.disk_list))]
-        self.enable_ai_var = tk.IntVar() 
+        self.disk_checkbuttons = []  # Lista para armazenar as checkbuttons de discos
+
+        self.enable_ai_var = tk.IntVar()
         self.create_widgets()
 
     def create_widgets(self):
@@ -26,17 +26,19 @@ class NVME_Test_GUI:
 
         # Caixas de seleção para cada teste
         for i, test in enumerate(self.test_options):
-            tk.Checkbutton(self.master, text=test, variable=self.selected_test_vars[i]).place(x=50, y=30+(i*30))
+            tk.Checkbutton(self.master, text=test, variable=self.selected_test_vars[i]).place(x=50, y=30 + (i * 30))
 
         tk.Label(self.master, text="Disks Select:").place(x=400, y=0)
-              
 
         # Caixas de seleção para cada disco
         for i, disk in enumerate(self.disk_list):
-            tk.Checkbutton(self.master, text=disk, variable=self.selected_disk_vars[i]).place(x=400, y=30+(i*30))
-        
+            var = tk.IntVar()
+            chk = tk.Checkbutton(self.master, text=disk, variable=var)
+            chk.place(x=400, y=30 + (i * 30))
+            self.disk_checkbuttons.append((disk, var))
+
         tk.Label(self.master, text="AI Report").place(x=600, y=0)
-        #Caixa de seleção para AI
+        # Caixa de seleção para AI
         tk.Checkbutton(self.master, text="AI Report Enable", variable=self.enable_ai_var).place(x=600, y=30)
 
         # Botão para iniciar o teste
@@ -65,6 +67,20 @@ class NVME_Test_GUI:
         time.sleep(5)
         proc.wait()
         self.disk_list = self.get_disk_devices()
+        self.update_disk_checkbuttons()
+
+    def update_disk_checkbuttons(self):
+        # Remove todos os checkbuttons existentes
+        for chk, var in self.disk_checkbuttons:
+            chk.destroy()
+        self.disk_checkbuttons = []
+
+        # Adiciona novos checkbuttons com a lista atualizada de discos
+        for i, disk in enumerate(self.disk_list):
+            var = tk.IntVar()
+            chk = tk.Checkbutton(self.master, text=disk, variable=var)
+            chk.place(x=400, y=30 + (i * 30))
+            self.disk_checkbuttons.append((disk, var))
 
     def get_test_scripts(self):
         test_scripts = []
@@ -92,70 +108,70 @@ class NVME_Test_GUI:
 
     def start_test(self):
         selected_tests = [self.test_options[i] for i, var in enumerate(self.selected_test_vars) if var.get() == 1]
-        selected_disks = [self.disk_list[i] for i, var in enumerate(self.selected_disk_vars) if var.get() == 1]
-       
+        selected_disks = [disk for disk, var in self.disk_checkbuttons if var.get() == 1]
 
         if not selected_tests:
             messagebox.showerror("Error", "No test selected.")
             return
 
         if not selected_disks:
-            messagebox.showerror("Erro", "No disk selected.")
+            messagebox.showerror("Error", "No disk selected.")
             return
 
-        
         for disk in selected_disks:
             current_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
             base_dir = os.path.dirname(__file__)
             log_dir = os.path.join(base_dir, "Log")
+            os.makedirs(log_dir, exist_ok=True)
             output_filename = f"{disk}_{current_time}.txt"
-            file_name = f"{log_dir}/{output_filename}"
+            file_name = os.path.join(log_dir, output_filename)
             with open(file_name, "w") as logfile:
                 for test in selected_tests:
-                    # Substitua "python test_script.py" pelo comando real para executar o teste
                     command = f"sudo python3 Test_Scripts/{test}.py {disk}"
-                    self.result_text.insert(tk.END, f"Executing Test Item: {test} for disk {disk}\n")   
-                    result = subprocess.check_output(command, shell=True, text=True, stderr=subprocess.STDOUT)
-                    # Adiciona o resultado à área de resultado
-                    pattern = r"Test Result: (PASS|FAIL)"
-                    # Procura todas as linhas que correspondem ao padrão
-                    matches = re.findall(pattern, result)
-                    # Se encontrou alguma correspondência
-                    if matches:
-                        # Itera sobre todas as correspondências
-                        for match in matches:
-                        # Se o status do teste for PASS, então o teste passou
-                            if match == "PASS":
-                                test_passed = True
-                                break
-                            # Se o status do teste for FAIL, então o teste falhou
-                            elif match == "FAIL":
-                                test_passed = False
-                            break
-                    else:
-                        messagebox.showerror("O status do teste não foi encontrado na saída.")
-                        test_passed = False
+                    self.result_text.insert(tk.END, f"Executing Test Item: {test} for disk {disk}\n")
+                    try:
+                        result = subprocess.check_output(command, shell=True, text=True, stderr=subprocess.STDOUT)
+                        logfile.write(result)
+                        logfile.write("\n")
+                        pattern = r"Test Result: (PASS|FAIL)"
+                        matches = re.findall(pattern, result)
+                        if matches:
+                            for match in matches:
+                                if match == "PASS":
+                                    test_passed = True
+                                    break
+                                elif match == "FAIL":
+                                    test_passed = False
+                                    break
+                        else:
+                            messagebox.showerror("Error", "Test result not found in output.")
+                            test_passed = False
 
-                    if test_passed:
-                        self.result_text.insert(tk.END, f"Disk: {disk}, Test Item: {test}, Test Result: PASS\n")
-                        # Escreve o resultado no arquivo de log
-                        logfile.write(f"Disk: {disk}, Test Item: {test}, Test Result: PASS\n{result}\n")
-                    else:
-                        self.result_text.insert(tk.END, f"Disk: {disk}, Test Item: {test}, Test Result: FAIL\n")
-                        # Escreve o resultado no arquivo de log
-                        logfile.write(f"Disk: {disk}, Test Item: {test}, Test Result: FAIL\n{result}\n")
-           
+                        if test_passed:
+                            self.result_text.insert(tk.END, f"Disk: {disk}, Test Item: {test}, Test Result: PASS\n")
+                            logfile.write(f"Disk: {disk}, Test Item: {test}, Test Result: PASS\n")
+                        else:
+                            self.result_text.insert(tk.END, f"Disk: {disk}, Test Item: {test}, Test Result: FAIL\n")
+                            logfile.write(f"Disk: {disk}, Test Item: {test}, Test Result: FAIL\n")
+                    except subprocess.CalledProcessError as e:
+                        messagebox.showerror("Error", f"Command failed: {e.output}")
+                        self.result_text.insert(tk.END, f"Command failed: {e.output}\n")
+
             if self.enable_ai_var.get() == 1:
                 command = f"sudo python3 gemini-IA.py {output_filename}"
-                result = subprocess.check_output(command, shell=True, text=True, stderr=subprocess.STDOUT)
-                self.result_text.insert(tk.END, "AI habilitado.\n")
+                
+                try:
+                    result = subprocess.check_output(command, shell=True, text=True, stderr=subprocess.STDOUT)
+                    #self.result_text.insert(tk.END, f"AI Report for {file_name}:\n{result}\n")
+                except subprocess.CalledProcessError as e:
+                    messagebox.showerror("Error", f"AI command failed: {e.output}")
+                    self.result_text.insert(tk.END, f"AI command failed: {e.output}\n")
             else:
-                self.result_text.insert(tk.END, "AI desabilitado.\n")
- 
+                self.result_text.insert(tk.END, "AI disabled.\n")
+
     def clear_results(self):
         # Limpa o texto na área de resultado
         self.result_text.delete(1.0, tk.END)
-
 
 def main():
     root = tk.Tk()

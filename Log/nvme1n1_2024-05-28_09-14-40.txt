@@ -1,9 +1,0 @@
-Disk: nvme1n1, Test Item: DSM_Test, Test Result: PASS
----------------DSM Test----------------
-NVMe DSM: success
-
-Test Result: PASS
-
-No error found during dsm test
-
-

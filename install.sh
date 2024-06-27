@@ -20,6 +20,10 @@ fi
 # get depended source code and software teste
 
 sudo python3 -m pip install --upgrade pip
-
-
+sudo apt install nvme-cli
+sudo pip install -U google-generativeai --break-system-packages
+sudo rm /usr/lib/python3.*/EXTERNALLY-MANAGED
+sudo apt-get install python-pip
+sudo pip install numpy
+sudo pip install pandas
 echo "nvme_ID install done."

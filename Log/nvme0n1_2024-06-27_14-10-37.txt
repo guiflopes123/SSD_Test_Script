@@ -1,0 +1,11 @@
+---------------Write and Compare Test----------------
+Error running command
+Write and Compare Test 55: FAIL
+
+Error running command
+Write and Compare Test AA: FAIL
+
+Test Result: FAIL
+
+
+Disk: nvme0n1, Test Item: 5.Write_and_Compare-5seg, Test Result: FAIL

@@ -63,6 +63,7 @@ def get_nvme_controllers(partition_name):
                     nvme_controllers.append(controller)
             elif controller.startswith('/dev/sd'):
                print("Controlador não suportado.\n")
+               print("Test Result: FAIL\n")
     return nvme_controllers, sata_controllers
 
 def print_controller_info(controller):
