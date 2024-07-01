@@ -14,37 +14,56 @@ def get_nvme_controllers(partition_name):
                 if controller not in nvme_controllers:
                     nvme_controllers.append(controller)
             elif controller.startswith('/dev/sd'):
-               print("Controlador não suportado.\n")
+                if controller not in sata_controllers:
+                    sata_controllers.append(controller)
     return nvme_controllers, sata_controllers
 
 def print_controller_info(controller):
     if controller.startswith('/dev/nvme'):
         cmd = ['sudo', 'nvme', 'smart-log', controller]
         print("---------------SMART LOG Test----------------")
-    else:
-        print("Controlador não suportado.\n")
-        return False
-
-    controller_info = subprocess.run(cmd, capture_output=True, text=True)
-    if controller_info.returncode == 0:
-        pattern = r"critical_warning.*"
+        controller_info = subprocess.run(cmd, capture_output=True, text=True)
+        if controller_info.returncode == 0:
+            pattern = r"critical_warning.*"
                     # Procura todas as linhas que correspondem ao padrão
-        matches = re.findall(pattern, controller_info.stdout)
+            matches = re.findall(pattern, controller_info.stdout)
         #print(matches)
         # Se encontrou alguma correspondência
-        if matches:
+            if matches:
             # Itera sobre todas as correspondências
-            for match in matches:
+                for match in matches:
             # Se o status do teste for PASS, então o teste passou
-                if "0" in match:
-                    print("Test Result: PASS\n")
-                    print(controller_info.stdout)
-                    break
+                    if "0" in match:
+                        print("Test Result: PASS\n")
+                        print(controller_info.stdout)
+                        break
                 # Se o status do teste for FAIL, então o teste falhou
-                else:
-                    print("Test Result: FAIL\n")
-                break
-
+                    else:
+                        print("Test Result: FAIL\n")
+                        break
+    elif('/dev/sd'):
+        cmd = ['sudo', 'skdump', controller]
+        print(cmd)
+        print("---------------SMART LOG Test----------------")
+        controller_info = subprocess.run(cmd, capture_output=True, text=True)
+        if controller_info.returncode == 0:
+            pattern = r"SMART Disk Health Good: yes"
+                    # Procura todas as linhas que correspondem ao padrão
+            matches = re.findall(pattern, controller_info.stdout)
+        #print(matches)
+        # Se encontrou alguma correspondência
+            if matches:
+            # Itera sobre todas as correspondências
+                for match in matches:
+            # Se o status do teste for PASS, então o teste passou
+                    if "yes" in match:
+                        print("Test Result: PASS\n")
+                        print(controller_info.stdout)
+                        break
+                # Se o status do teste for FAIL, então o teste falhou
+                    else:
+                        print("Test Result: FAIL\n")
+                        break
     else:
         print("Test Result: FAIL\n")
         return False
@@ -66,6 +85,7 @@ if __name__ == "__main__":
     if len(sys.argv) != 2:
         print("Erro ao passar os argumentos")
         sys.exit(1)
-
+    
     partition_name = sys.argv[1]
+    #partition_name = "sda"
     test_passed = test_storage(partition_name)

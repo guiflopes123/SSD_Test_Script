@@ -26,4 +26,5 @@ sudo rm /usr/lib/python3.*/EXTERNALLY-MANAGED
 sudo apt-get install python-pip
 sudo pip install numpy
 sudo pip install pandas
+sudo apt install libatasmart-bin
 echo "nvme_ID install done."
