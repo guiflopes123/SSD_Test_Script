@@ -9,7 +9,7 @@ import time
 class NVME_Test_GUI:
     def __init__(self, master):
         self.master = master
-        self.master.title("NVME Test HT Micron")
+        self.master.title("NVME Test HT Micron - Dev. by Guilherme F Lopes guilherme.lopes@htmicron.com.br")
         self.master.geometry("800x600")
 
         self.test_options = self.get_test_scripts()  # Obter os nomes dos arquivos Python de teste
@@ -56,6 +56,10 @@ class NVME_Test_GUI:
 
         self.results_frame = tk.Frame(self.master)
         self.results_frame.place(x=50, y=350)
+
+                # Adiciona a barra de texto fixa na parte inferior da janela
+        self.footer = tk.Label(self.master, text="Dev: Guilherme F. Lopes - guilherme.lopes@htmicron.com.br", bd=1, relief=tk.SUNKEN, anchor=tk.W)
+        self.footer.pack(side=tk.BOTTOM, fill=tk.X)
 
     def scan_devices(self):
         rescan_cmd = "echo 1 > /sys/bus/pci/rescan"
