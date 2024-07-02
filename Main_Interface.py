@@ -9,7 +9,7 @@ import time
 class NVME_Test_GUI:
     def __init__(self, master):
         self.master = master
-        self.master.title("NVME Test HT Micron - Dev. by Guilherme F Lopes guilherme.lopes@htmicron.com.br")
+        self.master.title("SSD NVME Test - HT Micron")
         self.master.geometry("800x600")
 
         self.test_options = self.get_test_scripts()  # Obter os nomes dos arquivos Python de teste
