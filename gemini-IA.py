@@ -62,7 +62,7 @@ def AI_analysis(file_path):
         {
         "role": "user",
         "parts": [
-            "Com base no log fornecido, onde no nome do arquivo se encontra data e hora do teste, você é um analisador de teste para memória NVME, me resuma o log e analise os dados visando encontrar possíveis problemas na memória, cada item de teste está identificado pcomo (Disk: (nome da memória) Test Item: (item de teste), Test Result: (resultado do teste)), Para cada item de teste encontrado resumir separadamente o seu resultado e os dados coletados. O primeiro item do resumo se chama Resumo do Teste, onde há uma lista de quais testes foram feitos com seus resultados, a saída deve ser um relatório em inglês.",
+            "Com base no log fornecido, você é um analisador de teste para memória NVME, me resuma o log e analise os dados visando encontrar possíveis problemas na memória, cada item de teste está identificado pcomo (Disk: (nome da memória) Test Item: (item de teste), Test Result: (resultado do teste)), Para cada item de teste encontrado resumir separadamente o seu resultado e os dados coletados. Iniciar o log com a data atual com hora, minuto e segundos. O primeiro item do resumo se chama Resumo do Teste, onde há uma lista de quais testes foram feitos com seus resultados, a saída deve ser um relatório em inglês.",
             file_content
         ],
         },

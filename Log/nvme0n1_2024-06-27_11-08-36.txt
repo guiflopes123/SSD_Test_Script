@@ -1,9 +1,0 @@
-Disk: nvme0n1, Test Item: 1.Controller_ID, Test Result: FAIL
----------------Controller ID Test----------------
-Test Result: FAIL
-
-
-Disk: nvme0n1, Test Item: 3.Error_Log_Check, Test Result: FAIL
----------------Error LOG Test----------------
-Erro no envio do comando error-log
-

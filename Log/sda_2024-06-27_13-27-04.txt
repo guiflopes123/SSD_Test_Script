@@ -1,6 +1,0 @@
-Controlador não suportado.
-
-Test Result: FAIL
-
-
-Disk: sda, Test Item: 3.Error_Log_Check, Test Result: FAIL

@@ -1,5 +1,0 @@
----------------SMART LOG Test----------------
-Test Result: FAIL
-
-
-Disk: sda, Test Item: 2.SMART_Log, Test Result: FAIL

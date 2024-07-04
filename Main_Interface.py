@@ -36,11 +36,11 @@ class NVME_Test_GUI:
             var = tk.IntVar()
             chk = tk.Checkbutton(self.master, text=disk, variable=var)
             chk.place(x=400, y=30 + (i * 30))
-            self.disk_checkbuttons.append((disk, var))
+            self.disk_checkbuttons.append((chk, var))
 
         tk.Label(self.master, text="AI Report").place(x=600, y=0)
         # Caixa de seleção para AI
-        tk.Checkbutton(self.master, text="AI Report Enable", variable=self.enable_ai_var).place(x=600, y=30)
+        tk.Checkbutton(self.master, text="AI Report Enable - 1 Min", variable=self.enable_ai_var).place(x=600, y=30)
 
         # Botão para iniciar o teste
         tk.Button(self.master, text="Start Test", command=self.start_test).place(x=50, y=300)
@@ -52,24 +52,38 @@ class NVME_Test_GUI:
         tk.Button(self.master, text="EXIT", command=self.master.quit).place(x=400, y=300)
 
         # Botão para scanear novos devices
-        tk.Button(self.master, text="SCAN", command=self.scan_devices).place(x=600, y=300)
+        tk.Button(self.master, text="SCAN - 1 Min", command=self.scan_devices).place(x=600, y=300)
 
         self.results_frame = tk.Frame(self.master)
         self.results_frame.place(x=50, y=350)
 
-                # Adiciona a barra de texto fixa na parte inferior da janela
+        # Adiciona a barra de texto fixa na parte inferior da janela
         self.footer = tk.Label(self.master, text="Dev: Guilherme F. Lopes - guilherme.lopes@htmicron.com.br", bd=1, relief=tk.SUNKEN, anchor=tk.W)
         self.footer.pack(side=tk.BOTTOM, fill=tk.X)
 
     def scan_devices(self):
-        rescan_cmd = "echo 1 > /sys/bus/pci/rescan"
+        rescan_cmd = "sudo bash reset_pxi_nvme.sh"
         proc = subprocess.Popen(rescan_cmd,
-                                shell=True,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE,
-                                encoding='utf-8')
-        time.sleep(5)
-        proc.wait()
+                            shell=True,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE,
+                            encoding='utf-8')
+        output, error = proc.communicate()
+        if proc.returncode == 0:
+            print("OK")
+        else:
+            messagebox.showerror("Error", f"Rescan command failed: {error}")
+        rescan_cmd = "sudo bash reset_sata.sh"
+        proc = subprocess.Popen(rescan_cmd,
+                            shell=True,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE,
+                            encoding='utf-8')
+        output, error = proc.communicate()
+        if proc.returncode == 0:
+            print("OK")
+        else:
+            messagebox.showerror("Error", f"Rescan command failed: {error}")
         self.disk_list = self.get_disk_devices()
         self.update_disk_checkbuttons()
 
@@ -84,7 +98,7 @@ class NVME_Test_GUI:
             var = tk.IntVar()
             chk = tk.Checkbutton(self.master, text=disk, variable=var)
             chk.place(x=400, y=30 + (i * 30))
-            self.disk_checkbuttons.append((disk, var))
+            self.disk_checkbuttons.append((chk, var))
 
     def get_test_scripts(self):
         test_scripts = []
@@ -97,13 +111,17 @@ class NVME_Test_GUI:
     def get_disk_devices(self):
         disk_devices = []
         try:
+            command = "df / | grep / | awk '{print $1}' | sed 's/[0-9]*$//'"
+            system_disk_path = subprocess.check_output(command, shell=True, text=True).strip()
+            system_disk = system_disk_path[-3:]
             output = subprocess.check_output(['lsblk', '-d', '-o', 'NAME'], text=True)
             for line in output.split('\n'):
                 if line.strip():  # Ignora linhas em branco
                     parts = line.split()
                     disk_name = parts[0]
                     if disk_name.startswith('sd') or disk_name.startswith('nvme'):
-                        disk_devices.append(disk_name)
+                        if disk_name != system_disk:
+                            disk_devices.append(disk_name)
         except subprocess.CalledProcessError:
             # Trata o erro se o comando lsblk falhar
             messagebox.showerror("Error lsblk.")
@@ -112,7 +130,7 @@ class NVME_Test_GUI:
 
     def start_test(self):
         selected_tests = [self.test_options[i] for i, var in enumerate(self.selected_test_vars) if var.get() == 1]
-        selected_disks = [disk for disk, var in self.disk_checkbuttons if var.get() == 1]
+        selected_disks = [chk.cget('text') for chk, var in self.disk_checkbuttons if var.get() == 1]
 
         if not selected_tests:
             messagebox.showerror("Error", "No test selected.")
@@ -165,6 +183,7 @@ class NVME_Test_GUI:
                     logfile.write("\n")
                     pattern = r"Test Result: (PASS|FAIL)"
                     matches = re.findall(pattern, result)
+
                     if matches:
                         for match in matches:
                             if match == "PASS":
@@ -183,6 +202,20 @@ class NVME_Test_GUI:
                     else:
                         result_text.insert(tk.END, f"Disk: {disk}, Test Item: {test}, Test Result: FAIL\n")
                         logfile.write(f"Disk: {disk}, Test Item: {test}, Test Result: FAIL\n")
+                
+                    lines = result.splitlines()
+                    for line in lines:
+                        if line.startswith("fr"):
+                            split = line.split()
+                            fw_name = split[2]     
+                            result_text.insert(tk.END, f"Firmware Name: {fw_name}\n")
+                            break
+                        elif line.startswith("	Firmware Revision"):
+                            split = line.split()
+                            fw_name = split[2]     
+                            result_text.insert(tk.END, f"Firmware Name: {fw_name}\n")
+                            break
+
                 except subprocess.CalledProcessError as e:
                     messagebox.showerror("Error", f"Command failed: {e.output}")
                     result_text.insert(tk.END, f"Command failed: {e.output}\n")
@@ -198,7 +231,7 @@ class NVME_Test_GUI:
             
             try:
                 result = subprocess.check_output(command, shell=True, text=True, stderr=subprocess.STDOUT)
-                result_text.insert(tk.END, f"AI Report for {file_name}:\n{result}\n")
+                result_text.insert(tk.END, f"AI Report for {file_name}:\n")
             except subprocess.CalledProcessError as e:
                 messagebox.showerror("Error", f"AI command failed: {e.output}")
                 result_text.insert(tk.END, f"AI command failed: {e.output}\n")
