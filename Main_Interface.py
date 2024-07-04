@@ -40,7 +40,7 @@ class NVME_Test_GUI:
 
         tk.Label(self.master, text="AI Report").place(x=600, y=0)
         # Caixa de seleção para AI
-        tk.Checkbutton(self.master, text="AI Report Enable - 1 Min", variable=self.enable_ai_var).place(x=600, y=30)
+        #tk.Checkbutton(self.master, text="AI Report Enable - 1 Min", variable=self.enable_ai_var).place(x=600, y=30)
 
         # Botão para iniciar o teste
         tk.Button(self.master, text="Start Test", command=self.start_test).place(x=50, y=300)

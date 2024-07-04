@@ -20,7 +20,7 @@ https://ai.google.dev/gemini-api/docs/get-started/python
 """
 
 #os.environ["YOUR_API_KEY"] = "AIzaSyCfWPLk7Hc3VI_PgWi4p3Fzjlm-cIub4r4"
-genai.configure(api_key="AIzaSyD2HJu1KzyvGB-6GILSz3kaKdfenl7nRI4")
+genai.configure(api_key="")
 # Create the model
 # See https://ai.google.dev/api/python/google/generativeai/GenerativeModel
 generation_config = {
