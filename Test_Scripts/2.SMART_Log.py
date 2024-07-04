@@ -43,7 +43,7 @@ def print_controller_info(controller):
                         break
     elif('/dev/sd'):
         cmd = ['sudo', 'skdump', controller]
-        print(cmd)
+        #print(cmd)
         print("---------------SMART LOG Test----------------")
         controller_info = subprocess.run(cmd, capture_output=True, text=True)
         if controller_info.returncode == 0:
