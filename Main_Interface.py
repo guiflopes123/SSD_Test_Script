@@ -10,7 +10,7 @@ class NVME_Test_GUI:
     def __init__(self, master):
         self.master = master
         self.master.title("SSD NVME Test - HT Micron")
-        self.master.geometry("800x600")
+        self.master.geometry("1000x800")
 
         self.test_options = self.get_test_scripts()  # Obter os nomes dos arquivos Python de teste
         self.disk_list = self.get_disk_devices()  # Obter a lista de dispositivos NVMe e SATA conectados
@@ -153,7 +153,7 @@ class NVME_Test_GUI:
             result_label = tk.Label(disk_frame, text=disk, width=20)
             result_label.pack(side=tk.LEFT)
 
-            result_text = tk.Text(disk_frame, height=5, width=60)
+            result_text = tk.Text(disk_frame, height=5, width=80)
             result_text.pack(side=tk.LEFT, padx=5)
 
             status_label = tk.Label(disk_frame, text="WAITING", width=10, bg="yellow")
@@ -227,7 +227,7 @@ class NVME_Test_GUI:
             status_label.config(text="FAIL", bg="red")
 
         if self.enable_ai_var.get() == 1:
-            command = f"sudo python3 gemini-IA.py {output_filename}"
+            command = f"sudo python3 gemini-IA.py {output_filename} {current_time}"
             
             try:
                 result = subprocess.check_output(command, shell=True, text=True, stderr=subprocess.STDOUT)

@@ -19,7 +19,7 @@ See the getting started guide for more information:
 https://ai.google.dev/gemini-api/docs/get-started/python
 """
 
-#os.environ["YOUR_API_KEY"] = "AIzaSyCfWPLk7Hc3VI_PgWi4p3Fzjlm-cIub4r4"
+#os.environ["YOUR_API_KEY"] = ""
 genai.configure(api_key="")
 # Create the model
 # See https://ai.google.dev/api/python/google/generativeai/GenerativeModel
@@ -49,7 +49,7 @@ safety_settings = [
   },
 ]
 
-def AI_analysis(file_path):
+def AI_analysis(file_path, current_time):
     
     base_dir = os.path.dirname(__file__)
     log_dir = os.path.join(base_dir, "Log")
@@ -62,8 +62,9 @@ def AI_analysis(file_path):
         {
         "role": "user",
         "parts": [
-            "Com base no log fornecido, você é um analisador de teste para memória NVME, me resuma o log e analise os dados visando encontrar possíveis problemas na memória, cada item de teste está identificado pcomo (Disk: (nome da memória) Test Item: (item de teste), Test Result: (resultado do teste)), Para cada item de teste encontrado resumir separadamente o seu resultado e os dados coletados. Iniciar o log com a data atual com hora, minuto e segundos. O primeiro item do resumo se chama Resumo do Teste, onde há uma lista de quais testes foram feitos com seus resultados, a saída deve ser um relatório em inglês.",
-            file_content
+            "Com base no log fornecido, você é um analisador de teste para memória NVME, me resuma o log e analise os dados visando encontrar possíveis problemas na memória, cada item de teste está identificado pcomo (Disk: (nome da memória) Test Item: (item de teste), Test Result: (resultado do teste)), Para cada item de teste encontrado resumir separadamente o seu resultado e os dados coletados. Iniciar o log com a data atual com hora, minuto e segundos fornecidos pela variavel current_time. O primeiro item do resumo se chama Resumo do Teste, onde há uma lista de quais testes foram feitos com seus resultados, a saída deve ser um relatório em inglês.",
+            file_content, current_time
+            
         ],
         },
              
@@ -90,13 +91,14 @@ model = genai.GenerativeModel(
 )
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
+    if len(sys.argv) != 3:
       print("Erro ao passar os argumentos. Use: python script.py caminho/para/arquivo.txt")
       sys.exit(1)
 
     file_path = sys.argv[1]
+    current_time = sys.argv[2]
     #file_path = "nvme0n1_2024-06-27_13-58-29.txt"
-    Generated_AR = AI_analysis(file_path)
+    Generated_AR = AI_analysis(file_path,current_time)
     #file_path = "nvme0n1_2024-05-24_14-09-29.txt"
 
     
