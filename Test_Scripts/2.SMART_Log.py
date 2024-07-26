@@ -64,6 +64,9 @@ def print_controller_info(controller):
                     else:
                         print("Test Result: FAIL\n")
                         break
+            else:
+                print("Test Result: FAIL\n")
+                return False
     else:
         print("Test Result: FAIL\n")
         return False
@@ -87,5 +90,5 @@ if __name__ == "__main__":
         sys.exit(1)
     
     partition_name = sys.argv[1]
-    #partition_name = "sda"
+    partition_name = "sdd"
     test_passed = test_storage(partition_name)

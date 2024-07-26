@@ -5,59 +5,33 @@ import os
 import random
 import time
 
-def test_55(controller):
+def nvme_test(controller, input_file):
 #----------------------Write and Compare Test 55-------------------------------
-    if nvme_write(controller,start_block,num_blocks,block_size,pattern_01_file):
-        if nvme_compare (controller,start_block,num_blocks,block_size,pattern_01_file):
-            print("Write and Compare Test 55: PASS")
+    if nvme_write(controller,start_block,num_blocks,block_size,input_file):
+        if nvme_compare (controller,start_block,num_blocks,block_size,input_file):
+            print("Write and Compare Test {input_file}: PASS")
             nvme_format(controller)
             return True
         else:
-            print ("55 Data comparison error!")
+            print ("{input_file} Data comparison error!")
             return False
     else:
-        print("Write and Compare Test 55: FAIL\n")
+        print("Write and Compare Test {input_file}: FAIL\n")
         return False
 
-def sata_test_55(controller):
+def sata_test(controller,input_file):
 #----------------------Write and Compare Test 55-------------------------------
-    if sata_write(controller,pattern_01_file):
-        if sata_read (controller,pattern_01_file):
-            print("Write and Compare Test 55: PASS")
+    if sata_write(controller,input_file):
+        if sata_read (controller,input_file):
+            print("Write and Compare Test {input_file}: PASS")
             return True
         else:
-            print ("55 Data comparison error!")
+            print ("{input_file} Data comparison error!")
             return False
     else:
-        print("Write and Compare Test 55: FAIL\n")
+        print("Write and Compare Test {input_file}: FAIL\n")
         return False
 
-def sata_test_AA(controller):
-#----------------------Write and Compare Test 55-------------------------------
-    if sata_write(controller,pattern_10_file):
-        if sata_read (controller,pattern_10_file):
-            print("Write and Compare Test AA: PASS")
-            return True
-        else:
-            print ("55 Data comparison error!")
-            return False
-    else:
-        print("Write and Compare Test AA: FAIL\n")
-        return False
-
-def test_AA(controller):
-#----------------------Write and Compare Test AA-------------------------------
-    if nvme_write(controller,start_block,num_blocks,block_size,pattern_10_file):
-        if nvme_compare (controller,start_block,num_blocks,block_size,pattern_10_file):
-            print("Write and Compare Test AA: PASS")
-            nvme_format(controller)
-            return True
-        else:
-            print ("AA Data comparison error!")
-            return False
-    else:
-        print("Write and Compare Test AA: FAIL\n")
-        return False
 
 #----------------------Check if both tests PASS-------------------------------
 
@@ -170,20 +144,24 @@ def generate_test_file(file_path, num_blocks, block_size, pattern):
         file_path (str): Path to the test file.
         num_blocks (int): Number of blocks to generate.
         block_size (int): Size of each block in bytes.
-        pattern (str): Pattern to generate ('01', '10', 'random').
+        pattern (str): Pattern to generate ('01', '10', 'random', '0000', '1111', 'A5A5', '5A5A').
 
     Returns:
         None
     """
     with open(file_path, 'wb') as file:
-        if pattern == '01':
-            data = b'\x01\x00' * (block_size // 2)
-        elif pattern == '10':
-            data = b'\x00\x01' * (block_size // 2)
-        elif pattern == 'random':
-            data = bytes([random.randint(0, 1) for _ in range(block_size)])
+        if pattern == 'random':
+            data = bytes([random.randint(0, 255) for _ in range(block_size)])
+        elif pattern == '00':
+            data = b'\x00' * block_size
+        elif pattern == 'FF':
+            data = b'\xFF' * block_size
+        elif pattern == 'AA':
+            data = b'\xAA' * block_size
+        elif pattern == '55':
+            data = b'\x55' * block_size
         else:
-            raise ValueError("Invalid pattern. Choose from '01', '10', or 'random'.")
+            raise ValueError("Invalid pattern. Choose from '01', '10', 'random', '00', 'FF', 'A5', or '5A'.")
 
         for _ in range(num_blocks):
             file.write(data)
@@ -219,14 +197,14 @@ def get_nvme_controllers(partition_name):
 
 def print_controller_info(controller):
     if controller.startswith('/dev/nvme'):
-        if (test_55(controller) & test_AA(controller)):
+        if (nvme_test(controller,pattern_00_file) & nvme_test(controller,pattern_FF_file) & nvme_test(controller,pattern_AA_file) & nvme_test(controller,pattern_55_file)):
             print("Test Result: PASS\n")
             return True
         else:
             print("Test Result: FAIL\n")
             return False
     elif controller.startswith('/dev/sd'):
-        if (sata_test_55(controller) & sata_test_AA(controller)):
+        if (sata_test(controller,pattern_00_file) & sata_test(controller,pattern_FF_file) & sata_test(controller,pattern_AA_file) & sata_test(controller,pattern_55_file)):
             print("Test Result: PASS\n")
             return True
         else:
@@ -241,8 +219,10 @@ num_blocks = 10
 block_size = 512  # You can adjust the block size as needed
 base_dir = os.path.dirname(__file__)
 parent_dir = os.path.abspath(os.path.join(base_dir, '..'))
-pattern_01_file = parent_dir + '/test_pattern_01.bin'
-pattern_10_file = parent_dir + '/test_pattern_10.bin'
+pattern_00_file = parent_dir + '/test_pattern_00.bin'
+pattern_FF_file = parent_dir + '/test_pattern_FF.bin'
+pattern_AA_file = parent_dir + '/test_pattern_AA.bin'
+pattern_55_file = parent_dir + '/test_pattern_55.bin'
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
@@ -255,6 +235,8 @@ if __name__ == "__main__":
     test_passed = test_storage(partition_name)
    
 
-    #generate_test_file(pattern_01_file, num_blocks, block_size, '01')
-    #generate_test_file(pattern_10_file, num_blocks, block_size, '10')
+    # generate_test_file(pattern_00_file, num_blocks, block_size, '00')
+    # generate_test_file(pattern_FF_file, num_blocks, block_size, 'FF')
+    # generate_test_file(pattern_55_file, num_blocks, block_size, '55')
+    # generate_test_file(pattern_AA_file, num_blocks, block_size, 'AA')
     #print("Test files generated successfully.")
