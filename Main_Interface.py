@@ -10,7 +10,7 @@ class NVME_Test_GUI:
     def __init__(self, master):
         self.master = master
         self.master.title("SSD NVME Test - HT Micron")
-        self.master.geometry("1000x800")
+        self.master.geometry("1900x1300")
 
         self.test_options = self.get_test_scripts()  # Obter os nomes dos arquivos Python de teste
         self.disk_list = self.get_disk_devices()  # Obter a lista de dispositivos NVMe e SATA conectados
@@ -18,18 +18,25 @@ class NVME_Test_GUI:
         self.selected_test_vars = [tk.IntVar() for _ in range(len(self.test_options))]
         self.disk_checkbuttons = []  # Lista para armazenar as checkbuttons de discos
         self.disk_result_widgets = {}  # Dicionário para armazenar widgets de resultado para cada disco
-
+        # Variável para armazenar o número de série
+        self.serial_number_var = tk.StringVar()
+        self.print_ok_var = tk.IntVar()  # Variável para o check "Impressão OK"
         self.enable_ai_var = tk.IntVar()
         self.create_widgets()
 
     def create_widgets(self):
-        tk.Label(self.master, text="Test Itens Select:").place(x=50, y=0)
+        tk.Label(self.master, text="Selecione Itens de Teste:").place(x=50, y=0)
+
+        # Campo para o operador inserir o nome
+        tk.Label(self.master, text="Nome do Operador:").place(x=50, y=250)
+        self.operator_name_entry = tk.Entry(self.master)
+        self.operator_name_entry.place(x=180, y=250)
 
         # Caixas de seleção para cada teste
         for i, test in enumerate(self.test_options):
             tk.Checkbutton(self.master, text=test, variable=self.selected_test_vars[i]).place(x=50, y=30 + (i * 30))
 
-        tk.Label(self.master, text="Disks Select:").place(x=400, y=0)
+        tk.Label(self.master, text="Selecione os Discos:").place(x=400, y=0)
 
         # Caixas de seleção para cada disco
         for i, disk in enumerate(self.disk_list):
@@ -38,21 +45,17 @@ class NVME_Test_GUI:
             chk.place(x=400, y=30 + (i * 30))
             self.disk_checkbuttons.append((chk, var))
 
-        tk.Label(self.master, text="AI Report").place(x=600, y=0)
+        # tk.Label(self.master, text="AI Report").place(x=600, y=0)
         # Caixa de seleção para AI
         #tk.Checkbutton(self.master, text="AI Report Enable - 1 Min", variable=self.enable_ai_var).place(x=600, y=30)
 
-        # Botão para iniciar o teste
-        tk.Button(self.master, text="Start Test", command=self.start_test).place(x=50, y=300)
 
-        # Botão para limpar a área de resultado
-        tk.Button(self.master, text="Clean Results", command=self.clear_results).place(x=200, y=300)
 
-        # Botão para finalizar o programa
-        tk.Button(self.master, text="EXIT", command=self.master.quit).place(x=400, y=300)
-
-        # Botão para scanear novos devices
-        tk.Button(self.master, text="SCAN - 1 Min", command=self.scan_devices).place(x=600, y=300)
+        # Botões
+        tk.Button(self.master, text="Iniciar Teste", command=self.start_test).place(x=50, y=300)
+        tk.Button(self.master, text="Limpar Resultados", command=self.clear_results).place(x=200, y=300)
+        tk.Button(self.master, text="SAIR", command=self.master.quit).place(x=400, y=300)
+        tk.Button(self.master, text="SCAN Discos - 1 Min", command=self.scan_devices).place(x=600, y=300)
 
         self.results_frame = tk.Frame(self.master)
         self.results_frame.place(x=50, y=350)
@@ -128,16 +131,28 @@ class NVME_Test_GUI:
             print("Error lsblk.")
         return disk_devices
 
+    def update_print_ok_status(self, var, lbl):
+        if var.get() == 1:
+            lbl.config(text="OK", fg="green")
+        else:
+            lbl.config(text="")
+
     def start_test(self):
+
+        operator_name = self.operator_name_entry.get().strip()
+        if not operator_name:
+            messagebox.showerror("Error", "Inserir nome do operador.")
+            return
+
         selected_tests = [self.test_options[i] for i, var in enumerate(self.selected_test_vars) if var.get() == 1]
         selected_disks = [chk.cget('text') for chk, var in self.disk_checkbuttons if var.get() == 1]
 
         if not selected_tests:
-            messagebox.showerror("Error", "No test selected.")
+            messagebox.showerror("Error", "Selecione o teste.")
             return
 
         if not selected_disks:
-            messagebox.showerror("Error", "No disk selected.")
+            messagebox.showerror("Error", "Selecione o disco.")
             return
 
         # Limpar widgets de resultado anteriores
@@ -156,14 +171,50 @@ class NVME_Test_GUI:
             result_text = tk.Text(disk_frame, height=5, width=80)
             result_text.pack(side=tk.LEFT, padx=5)
 
-            status_label = tk.Label(disk_frame, text="WAITING", width=10, bg="yellow")
+            status_label = tk.Label(disk_frame, text="Aguardando", width=10, bg="yellow")
             status_label.pack(side=tk.LEFT, padx=5)
 
-            self.disk_result_widgets[disk] = (result_text, status_label)
+            serial_frame = tk.Frame(disk_frame)
+            serial_frame.pack(side=tk.LEFT, padx=(10, 0))
 
-            self.run_tests_for_disk(disk, selected_tests, result_text, status_label)
+            # Label "Serial Number:"
+            serial_label = tk.Label(serial_frame, text="Serial Number:", width=15)
+            serial_label.pack()
 
-    def run_tests_for_disk(self, disk, selected_tests, result_text, status_label):
+            # Label para exibir o número de série, logo abaixo do texto
+            serial_number_display = tk.Label(serial_frame, text="SN_123456", font=("Arial", 12, "bold"), fg="blue", width=20)
+            serial_number_display.pack()
+
+            # Frame de impressão (para o checkbox "Impressão OK" e status)
+            print_frame = tk.Frame(disk_frame)
+            print_frame.pack(side=tk.LEFT, padx=(10, 0))
+
+            # Variável IntVar para o checkbox de cada disco
+            print_ok_var = tk.IntVar()
+
+            # Label para mostrar o status "OK" ao lado do checkbox, deve ser criada aqui para ser única para cada disco
+            print_ok_status_label = tk.Label(print_frame, text="", font=("Arial", 12))
+            print_ok_status_label.pack()
+
+            # Checkbox "Impressão OK" com status visual usando uma função auxiliar
+            print_ok_checkbutton = tk.Checkbutton(
+                print_frame, 
+                text="Etiqueta", 
+                variable=print_ok_var, 
+                command=lambda var=print_ok_var, lbl=print_ok_status_label: self.update_print_ok_status(var, lbl), 
+                width=15
+            )
+            print_ok_checkbutton.pack()
+
+            # Salvar os widgets relacionados ao disco em `disk_result_widgets`
+            self.disk_result_widgets[disk] = (result_text, status_label, serial_number_display, print_ok_var, print_ok_status_label)
+
+            # Passar `serial_number_display` e `print_ok_status_label` para o teste do disco
+            self.run_tests_for_disk(disk, selected_tests, result_text, status_label, operator_name, serial_number_display, print_ok_status_label)
+
+            
+
+    def run_tests_for_disk(self, disk, selected_tests, result_text, status_label, operator_name, serial_number_display,print_ok_status_label):
         current_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         base_dir = os.path.dirname(__file__)
         log_dir = os.path.join(base_dir, "Log")
@@ -174,6 +225,11 @@ class NVME_Test_GUI:
         all_tests_passed = True
 
         with open(file_name, "w") as logfile:
+            
+            # Escreve o nome do operador na primeira linha do log
+            logfile.write(f"Operator Name: {operator_name}\n")
+            logfile.write(f"Test Start Time: {current_time}\n\n")
+
             for test in selected_tests:
                 command = f"sudo python3 Test_Scripts/{test}.py {disk}"
                 #result_text.insert(tk.END, f"Executing Test Item: {test} for disk {disk}\n")
@@ -205,16 +261,30 @@ class NVME_Test_GUI:
                 
                     lines = result.splitlines()
                     for line in lines:
-                        if line.startswith("fr"):
+                        if line.startswith("sn"):
                             split = line.split()
-                            fw_name = split[2]     
-                            result_text.insert(tk.END, f"Firmware Name: {fw_name}\n")
+                            sn_name = split[2]     
+                            # result_text.insert(tk.END, f"Serial Number: {sn_name}\n")
+                            serial_number_display.config(text=sn_name, font=("Arial", 15, "bold"), fg="blue")
                             break
-                        elif line.startswith("	Firmware Revision"):
+
+                        elif line.startswith("	Serial Number:"):
                             split = line.split()
-                            fw_name = split[2]     
-                            result_text.insert(tk.END, f"Firmware Name: {fw_name}\n")
+                            sn_name = split[2]     
+                            # result_text.insert(tk.END, f"Serial Name: {sn_name}\n")
+                            serial_number_display.config(text=sn_name, font=("Arial", 15, "bold"), fg="blue")
                             break
+
+                        # if line.startswith("fr"):
+                        #     split = line.split()
+                        #     fw_name = split[2]     
+                        #     result_text.insert(tk.END, f"Firmware Name: {fw_name}\n")
+                        #     break
+                        # elif line.startswith("	Firmware Revision"):
+                        #     split = line.split()
+                        #     fw_name = split[2]     
+                        #     result_text.insert(tk.END, f"Firmware Name: {fw_name}\n")
+                        #     break
 
                 except subprocess.CalledProcessError as e:
                     messagebox.showerror("Error", f"Command failed: {e.output}")
@@ -235,8 +305,8 @@ class NVME_Test_GUI:
             except subprocess.CalledProcessError as e:
                 messagebox.showerror("Error", f"AI command failed: {e.output}")
                 result_text.insert(tk.END, f"AI command failed: {e.output}\n")
-        else:
-            result_text.insert(tk.END, "AI disabled.\n")
+        # else:
+        #     result_text.insert(tk.END, "AI disabled.\n")
 
     def clear_results(self):
         # Limpa todos os widgets de resultado

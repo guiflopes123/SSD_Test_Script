@@ -90,5 +90,5 @@ if __name__ == "__main__":
         sys.exit(1)
     
     partition_name = sys.argv[1]
-    partition_name = "sdd"
+    # partition_name = "sdd"
     test_passed = test_storage(partition_name)

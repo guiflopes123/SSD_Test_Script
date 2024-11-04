@@ -55,6 +55,7 @@ if __name__ == "__main__":
         print("Erro ao passar os argumentos")
         sys.exit(1)
     partition_name = sys.argv[1]
+# partition_name = "sdb"
     test_passed = test_storage(partition_name)
 
     
