@@ -22,6 +22,8 @@ class NVME_Test_GUI:
         self.serial_number_var = tk.StringVar()
         self.print_ok_var = tk.IntVar()  # Variável para o check "Impressão OK"
         self.enable_ai_var = tk.IntVar()
+        self.lote_var = tk.StringVar()
+        self.qtd_pecas_var = tk.IntVar()
         self.create_widgets()
 
     def create_widgets(self):
@@ -31,6 +33,10 @@ class NVME_Test_GUI:
         tk.Label(self.master, text="Nome do Operador:").place(x=50, y=250)
         self.operator_name_entry = tk.Entry(self.master)
         self.operator_name_entry.place(x=180, y=250)
+
+        tk.Label(self.master, text="Peças Restantes:").place(x=400, y=250)
+        self.qtd_pecas_restantes_val = tk.Label(self.master, textvariable=self.qtd_pecas_var, font=("Arial", 10, "bold"))
+        self.qtd_pecas_restantes_val.place(x=520, y=250)
 
         # Caixas de seleção para cada teste
         for i, test in enumerate(self.test_options):
@@ -49,6 +55,19 @@ class NVME_Test_GUI:
         # Caixa de seleção para AI
         #tk.Checkbutton(self.master, text="AI Report Enable - 1 Min", variable=self.enable_ai_var).place(x=600, y=30)
 
+        # Frame para entrada de Lote e Quantidade de Peças
+        entrada_frame = tk.Frame(self.master)
+        entrada_frame.pack(pady=10)
+
+        # Campo de entrada para o Lote
+        tk.Label(entrada_frame, text="Nome do Lote:").pack(side=tk.LEFT)
+        lote_entry = tk.Entry(entrada_frame, textvariable=self.lote_var)
+        lote_entry.pack(side=tk.LEFT, padx=5)
+
+        # Campo de entrada para a Quantidade de Peças
+        tk.Label(entrada_frame, text="Quantidade de Peças:").pack(side=tk.LEFT)
+        qtd_pecas_entry = tk.Entry(entrada_frame, textvariable=self.qtd_pecas_var)
+        qtd_pecas_entry.pack(side=tk.LEFT, padx=5)
 
 
         # Botões
@@ -56,6 +75,7 @@ class NVME_Test_GUI:
         tk.Button(self.master, text="Limpar Resultados", command=self.clear_results).place(x=200, y=300)
         tk.Button(self.master, text="SAIR", command=self.master.quit).place(x=400, y=300)
         tk.Button(self.master, text="SCAN Discos - 1 Min", command=self.scan_devices).place(x=600, y=300)
+        
 
         self.results_frame = tk.Frame(self.master)
         self.results_frame.place(x=50, y=350)
@@ -140,6 +160,18 @@ class NVME_Test_GUI:
     def start_test(self):
 
         operator_name = self.operator_name_entry.get().strip()
+        lote = self.lote_var.get().strip()
+        qtd_pecas = self.qtd_pecas_var.get()
+
+
+        if not lote:
+            messagebox.showerror("Error", "Inserir nome do lote")
+            return
+        
+        if not qtd_pecas:
+            messagebox.showerror("Error", "Inserir a quantidade do lote.")
+            return
+
         if not operator_name:
             messagebox.showerror("Error", "Inserir nome do operador.")
             return
@@ -210,11 +242,12 @@ class NVME_Test_GUI:
             self.disk_result_widgets[disk] = (result_text, status_label, serial_number_display, print_ok_var, print_ok_status_label)
 
             # Passar `serial_number_display` e `print_ok_status_label` para o teste do disco
-            self.run_tests_for_disk(disk, selected_tests, result_text, status_label, operator_name, serial_number_display, print_ok_status_label)
-
+            self.run_tests_for_disk(disk, selected_tests, result_text, status_label, operator_name, serial_number_display, lote)
+            
+            self.update_qtd_pecas_restantes()
             
 
-    def run_tests_for_disk(self, disk, selected_tests, result_text, status_label, operator_name, serial_number_display,print_ok_status_label):
+    def run_tests_for_disk(self, disk, selected_tests, result_text, status_label, operator_name, serial_number_display,lote):
         current_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         base_dir = os.path.dirname(__file__)
         log_dir = os.path.join(base_dir, "Log")
@@ -228,6 +261,7 @@ class NVME_Test_GUI:
             
             # Escreve o nome do operador na primeira linha do log
             logfile.write(f"Operator Name: {operator_name}\n")
+            logfile.write(f"Nome do lote: {lote}\n")
             logfile.write(f"Test Start Time: {current_time}\n\n")
 
             for test in selected_tests:
@@ -264,15 +298,23 @@ class NVME_Test_GUI:
                         if line.startswith("sn"):
                             split = line.split()
                             sn_name = split[2]     
-                            # result_text.insert(tk.END, f"Serial Number: {sn_name}\n")
+                            # Atualiza o display com o número de série formatado
                             serial_number_display.config(text=sn_name, font=("Arial", 15, "bold"), fg="blue")
+
+                            # Salva o número de série no arquivo Serial_Number.txt
+                            with open("Serial_Number.txt", "a") as file:
+                                file.write(f"{sn_name}\n")
                             break
 
                         elif line.startswith("	Serial Number:"):
                             split = line.split()
                             sn_name = split[2]     
-                            # result_text.insert(tk.END, f"Serial Name: {sn_name}\n")
+                            # Atualiza o display com o número de série formatado
                             serial_number_display.config(text=sn_name, font=("Arial", 15, "bold"), fg="blue")
+
+                            # Salva o número de série no arquivo Serial_Number.txt
+                            with open("Serial_Number.txt", "a") as file:
+                                file.write(f"{sn_name}\n")
                             break
 
                         # if line.startswith("fr"):
@@ -313,6 +355,10 @@ class NVME_Test_GUI:
         for widget in self.results_frame.winfo_children():
             widget.destroy()
         self.disk_result_widgets = {}
+
+    def update_qtd_pecas_restantes(self):
+    # Decrementa a quantidade de peças e atualiza o valor exibido
+        self.qtd_pecas_var.set(self.qtd_pecas_var.get() - 1)
 
 def main():
     root = tk.Tk()
