@@ -168,8 +168,8 @@ class NVME_Test_GUI:
             messagebox.showerror("Error", "Inserir nome do lote")
             return
         
-        if not qtd_pecas:
-            messagebox.showerror("Error", "Inserir a quantidade do lote.")
+        if not qtd_pecas or qtd_pecas<1:
+            messagebox.showerror("Error", "Quantidade do lote.")
             return
 
         if not operator_name:
@@ -250,10 +250,15 @@ class NVME_Test_GUI:
     def run_tests_for_disk(self, disk, selected_tests, result_text, status_label, operator_name, serial_number_display,lote):
         current_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         base_dir = os.path.dirname(__file__)
-        log_dir = os.path.join(base_dir, "Log")
+        log_dir = os.path.join(base_dir, "Log_Device")
         os.makedirs(log_dir, exist_ok=True)
         output_filename = f"{disk}_{current_time}.txt"
         file_name = os.path.join(log_dir, output_filename)
+
+        lote_dir = os.path.join(base_dir, "Log_Lote")
+        os.makedirs(lote_dir, exist_ok=True)
+        lote_filename = f"{lote}.txt"
+        lote_name = os.path.join(lote_dir, lote_filename)
         
         all_tests_passed = True
 
@@ -301,10 +306,12 @@ class NVME_Test_GUI:
                             # Atualiza o display com o número de série formatado
                             serial_number_display.config(text=sn_name, font=("Arial", 15, "bold"), fg="blue")
 
-                            # Salva o número de série no arquivo Serial_Number.txt
-                            with open("Serial_Number.txt", "a") as file:
+                            # Salva o número de série no arquivo lote_name.txt
+                           
+                            with open(lote_name, "a") as file:
                                 file.write(f"{sn_name}\n")
                             break
+
 
                         elif line.startswith("	Serial Number:"):
                             split = line.split()
@@ -313,7 +320,8 @@ class NVME_Test_GUI:
                             serial_number_display.config(text=sn_name, font=("Arial", 15, "bold"), fg="blue")
 
                             # Salva o número de série no arquivo Serial_Number.txt
-                            with open("Serial_Number.txt", "a") as file:
+                            filename = f"{lote}.txt"  # Nome do arquivo baseado no lote
+                            with open(lote_name, "a") as file:
                                 file.write(f"{sn_name}\n")
                             break
 
@@ -357,8 +365,14 @@ class NVME_Test_GUI:
         self.disk_result_widgets = {}
 
     def update_qtd_pecas_restantes(self):
-    # Decrementa a quantidade de peças e atualiza o valor exibido
-        self.qtd_pecas_var.set(self.qtd_pecas_var.get() - 1)
+        current_qtd = self.qtd_pecas_var.get()
+    
+        if current_qtd > 0:
+            # Decrementa a quantidade de peças e atualiza o valor exibido
+            self.qtd_pecas_var.set(current_qtd - 1)
+        else:
+            # Exibe uma mensagem de erro se a quantidade for zero ou negativa
+            tk.messagebox.showerror("Erro", "Quantidade de peças inválida")
 
 def main():
     root = tk.Tk()
