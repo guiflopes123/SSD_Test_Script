@@ -24,7 +24,9 @@ class NVME_Test_GUI:
         self.enable_ai_var = tk.IntVar()
         self.lote_var = tk.StringVar()
         self.qtd_pecas_var = tk.IntVar()
+        self.quality_var = tk.BooleanVar()
         self.create_widgets()
+        
 
     def create_widgets(self):
         tk.Label(self.master, text="Selecione Itens de Teste:").place(x=50, y=0)
@@ -69,6 +71,9 @@ class NVME_Test_GUI:
         qtd_pecas_entry = tk.Entry(entrada_frame, textvariable=self.qtd_pecas_var)
         qtd_pecas_entry.pack(side=tk.LEFT, padx=5)
 
+        # Campo do checkbox da Qualidade
+        tk.Checkbutton( entrada_frame,variable=self.quality_var, text="Inspeção da Qualidade").pack(side=tk.LEFT)
+    
 
         # Botões
         tk.Button(self.master, text="Iniciar Teste", command=self.start_test).place(x=50, y=300)
@@ -83,6 +88,58 @@ class NVME_Test_GUI:
         # Adiciona a barra de texto fixa na parte inferior da janela
         self.footer = tk.Label(self.master, text="Dev: Guilherme F. Lopes - guilherme.lopes@htmicron.com.br", bd=1, relief=tk.SUNKEN, anchor=tk.W)
         self.footer.pack(side=tk.BOTTOM, fill=tk.X)
+
+    def add_quality_checkbox_and_serial_check(self, disk, disk_frame):
+    # Frame para os campos de qualidade
+        quality_frame = tk.Frame(disk_frame)
+        quality_frame.pack(side=tk.LEFT, padx=(10, 0))
+
+        # Entrada para número de série
+        serial_label = tk.Label(quality_frame, text="Serial QA:", width=10)
+        serial_label.grid(row=0, column=0, padx=5)
+
+        serial_entry = tk.Entry(quality_frame, width=20)
+        serial_entry.grid(row=0, column=1, padx=5)
+
+        # Verificar QA
+        verify_button = tk.Button(
+            quality_frame,
+            text="Verificar QA",
+            command=lambda: self.verify_quality(disk, serial_entry.get()),
+            width=15,
+        )
+        verify_button.grid(row=1, column=0, columnspan=2, pady=5)
+
+    # Mostrar ou esconder os campos conforme o estado do checkbutton de qualidade
+        def toggle_quality_fields():
+            if self.quality_var.get():
+                quality_frame.pack(side=tk.LEFT, padx=(10, 0))
+            else:
+                quality_frame.pack_forget()
+
+        self.quality_var.trace_add("w", lambda *args: toggle_quality_fields())
+
+    def verify_quality(self, disk, entered_serial):
+        # Obtém o número de série lido
+        serial_display = self.disk_result_widgets[disk][2]
+        read_serial = serial_display.cget("text")
+
+        if entered_serial == read_serial:
+            # Diretório para log de qualidade
+            base_dir = os.path.dirname(__file__)
+            quality_log_dir = os.path.join(base_dir, "Qualidade_log")
+            os.makedirs(quality_log_dir, exist_ok=True)
+
+            # Nome do arquivo de log
+            quality_log_file = os.path.join(quality_log_dir, f"{self.lote_var.get().strip()}_QA_log.txt")
+
+            with open(quality_log_file, "a") as logfile:
+                logfile.write(f"Serial: {read_serial} - QA OK\n")
+
+            messagebox.showinfo("QA", "Etiqueta OK!")
+        else:
+            messagebox.showerror("QA", "ERRO!: Número de série não corresponde!")
+
 
     def scan_devices(self):
         rescan_cmd = "sudo bash reset_pxi_nvme.sh"
@@ -245,6 +302,8 @@ class NVME_Test_GUI:
             self.run_tests_for_disk(disk, selected_tests, result_text, status_label, operator_name, serial_number_display, lote)
             
             self.update_qtd_pecas_restantes()
+            if self.quality_var.get():
+                self.add_quality_checkbox_and_serial_check(disk, disk_frame)
             
 
     def run_tests_for_disk(self, disk, selected_tests, result_text, status_label, operator_name, serial_number_display,lote):
@@ -307,10 +366,12 @@ class NVME_Test_GUI:
                             serial_number_display.config(text=sn_name, font=("Arial", 15, "bold"), fg="blue")
 
                             # Salva o número de série no arquivo lote_name.txt
-                           
-                            with open(lote_name, "a") as file:
-                                file.write(f"{sn_name}\n")
-                            break
+                            if self.quality_var.get():
+                                break
+                            else:
+                                with open(lote_name, "a") as file:
+                                    file.write(f"{sn_name}\n")
+                                break
 
 
                         elif line.startswith("	Serial Number:"):
@@ -319,11 +380,12 @@ class NVME_Test_GUI:
                             # Atualiza o display com o número de série formatado
                             serial_number_display.config(text=sn_name, font=("Arial", 15, "bold"), fg="blue")
 
-                            # Salva o número de série no arquivo Serial_Number.txt
-                            filename = f"{lote}.txt"  # Nome do arquivo baseado no lote
-                            with open(lote_name, "a") as file:
-                                file.write(f"{sn_name}\n")
-                            break
+                            if self.quality_var.get():
+                                break
+                            else:
+                                with open(lote_name, "a") as file:
+                                    file.write(f"{sn_name}\n")
+                                break
 
                         # if line.startswith("fr"):
                         #     split = line.split()
