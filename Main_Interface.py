@@ -110,14 +110,6 @@ class NVME_Test_GUI:
         )
         verify_button.grid(row=1, column=0, columnspan=2, pady=5)
 
-    # Mostrar ou esconder os campos conforme o estado do checkbutton de qualidade
-        def toggle_quality_fields():
-            if self.quality_var.get():
-                quality_frame.pack(side=tk.LEFT, padx=(10, 0))
-            else:
-                quality_frame.pack_forget()
-
-        self.quality_var.trace_add("w", lambda *args: toggle_quality_fields())
 
     def verify_quality(self, disk, entered_serial):
         # Obtém o número de série lido
@@ -302,8 +294,8 @@ class NVME_Test_GUI:
             self.run_tests_for_disk(disk, selected_tests, result_text, status_label, operator_name, serial_number_display, lote)
             
             self.update_qtd_pecas_restantes()
-            if self.quality_var.get():
-                self.add_quality_checkbox_and_serial_check(disk, disk_frame)
+           
+            self.add_quality_checkbox_and_serial_check(disk, disk_frame)
             
 
     def run_tests_for_disk(self, disk, selected_tests, result_text, status_label, operator_name, serial_number_display,lote):
